@@ -267,6 +267,7 @@ button,input,.event-item,.btn{touch-action:manipulation;-webkit-tap-highlight-co
       <div class="form-group">
         <label><i class="fas fa-user"></i>連絡先氏名<span class="req">必須</span></label>
         <input type="text" id="contactName" class="w-addr" autocomplete="name" enterkeyhint="next" placeholder="例：田中 太郎">
+        <div class="hint">リーダー名が自動で入ります（変更できます）</div>
         <div class="err-msg" id="contactName-err">連絡先氏名を入力してください</div>
       </div>
       <div class="form-group">
@@ -659,8 +660,20 @@ function lookupPlayer(fromSide){
   msg.className = 'lookup-msg ok';
   msg.textContent = '✔ 登録データから リーダー・パートナーの情報を自動入力しました（修正も可能です）';
 }
-$('regLeader').addEventListener('input',  () => lookupPlayer('L'));
-$('regPartner').addEventListener('input', () => lookupPlayer('P'));
+/* ===== 連絡先氏名：リーダー名（漢字）を基本に自動入力。手で変更したら以後は上書きしない ===== */
+let contactEdited = false;
+function syncContact(){
+  if (contactEdited) return;
+  $('contactName').value = $('leaderKanji').value;
+  if ($('leaderKanji').value) v('contactName', true);
+}
+$('contactName').addEventListener('input', function(){
+  contactEdited = this.value.trim() !== '' && this.value !== $('leaderKanji').value;   // 空欄に戻す／リーダー名と同じなら連動を再開
+  if (this.value.trim() === '') syncContact();
+});
+$('leaderKanji').addEventListener('input', syncContact);
+$('regLeader').addEventListener('input',  () => { lookupPlayer('L'); syncContact(); });
+$('regPartner').addEventListener('input', () => { lookupPlayer('P'); syncContact(); });
 [...LEADER_IDS, ...PARTNER_IDS, 'leaderDistrict'].forEach(id => $(id).addEventListener('input', function(){
   if (autoFilled[id] !== undefined && this.value !== autoFilled[id]){ delete autoFilled[id]; this.classList.remove('autofilled'); }
 }));
