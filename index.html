@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2026 中部ダンスフェスティバル in 名古屋 アマチュア出場申込フォーム</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
 <style>
 :root{
   --navy:#1a237e; --navy2:#3949ab; --gold:#c8960c; --gold-l:#f5d77a;
@@ -77,6 +79,13 @@ input.invalid{border-color:var(--err);background:#fff6f6}
 .partner .col-title{background:linear-gradient(90deg,#c2487a,#ee8fb6)}
 .player-col .w-reg{max-width:100%}
 
+
+/* ===== 登録番号 自動入力 ===== */
+input.autofilled{background:#effaf3!important;border-color:#5cb87f!important}
+.lookup-msg{font-size:12px;margin-top:4px;font-weight:700;display:none}
+.lookup-msg.ok{display:block;color:#2d7a4f}
+.lookup-msg.ng{display:block;color:#b26a00}
+
 /* ===== events ===== */
 .section-label{font-size:14px;font-weight:800;color:#fff;padding:8px 14px;border-radius:9px;margin:18px 0 8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:linear-gradient(90deg,#1a237e,#3949ab)}
 .section-label:first-of-type{margin-top:0}
@@ -91,7 +100,7 @@ input.invalid{border-color:var(--err);background:#fff6f6}
 .event-item:hover{border-color:#aab3e6;transform:translateY(-1px);box-shadow:0 4px 12px rgba(57,73,171,.12)}
 .event-item input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:26px;height:26px;border:2px solid #b4bbdc;border-radius:7px;background:#fff;cursor:pointer;position:relative;transition:.2s}
 .event-item input[type=checkbox]:checked{background:linear-gradient(135deg,var(--navy2),var(--navy));border-color:var(--navy)}
-.event-item input[type=checkbox]:checked::after{content:"\f00c";font-family:"Font Awesome 6 Free";font-weight:900;color:#fff;font-size:13px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation:pop .25s}
+.event-item input[type=checkbox]:checked::after{content:"";position:absolute;left:8px;top:3px;width:6px;height:12px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
 @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.3)}100%{transform:scale(1)}}
 .event-item.checked{border-color:var(--gold);background:linear-gradient(135deg,#fffdf3,#fff4cf);box-shadow:0 4px 16px rgba(200,150,12,.25);animation:sel .3s}
 @keyframes sel{0%{transform:scale(.97)}60%{transform:scale(1.02)}100%{transform:scale(1)}}
@@ -149,6 +158,20 @@ input.invalid{border-color:var(--err);background:#fff6f6}
   .confirm-table th{width:38%}
   .step{padding:5px 9px;font-size:11px}
 }
+
+/* ===== 軽量化・スマホ操作性 ===== */
+html{-webkit-text-size-adjust:100%}
+button,input,.event-item,.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media (hover:none){.event-item:hover,.btn:hover{transform:none;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){
+  .card{box-shadow:0 2px 8px rgba(26,35,126,.07)}
+  input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date]{padding:12px;min-height:46px}
+  .event-item{min-height:56px;padding:12px}
+  .event-item:active{background:#f0f2ff}
+  /* 合計出場料と「確認画面へ」を画面下に固定表示 */
+  .fee-box{position:sticky;bottom:8px;z-index:20;box-shadow:0 6px 20px rgba(26,35,126,.35)}
+}
 </style>
 </head>
 <body>
@@ -192,9 +215,10 @@ input.invalid{border-color:var(--err);background:#fff6f6}
           <div class="col-title"><i class="fas fa-mars"></i>リーダー</div>
           <div class="form-group">
             <label><i class="fas fa-id-card"></i>リーダー登録番号<span class="req">必須</span></label>
-            <input type="text" id="regLeader" class="w-reg" placeholder="例：123456" maxlength="6" pattern="\d{6}" inputmode="numeric">
-            <div class="hint">半角数字6桁</div>
+            <input type="text" id="regLeader" class="w-reg" placeholder="例：123456" maxlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="off" enterkeyhint="done">
+            <div class="hint">半角数字6桁（入力すると リーダー・パートナー両方の情報が自動入力されます）</div>
             <div class="err-msg" id="regLeader-err">半角数字6桁で入力してください</div>
+            <div class="lookup-msg" id="regLeader-lookup"></div>
           </div>
           <div class="form-group">
             <label>リーダー名（ふりがな）<span class="req">必須</span></label>
@@ -215,9 +239,10 @@ input.invalid{border-color:var(--err);background:#fff6f6}
           <div class="col-title"><i class="fas fa-venus"></i>パートナー</div>
           <div class="form-group">
             <label><i class="fas fa-id-card"></i>パートナー登録番号<span class="req">必須</span></label>
-            <input type="text" id="regPartner" class="w-reg" placeholder="例：123456" maxlength="6" pattern="\d{6}" inputmode="numeric">
-            <div class="hint">半角数字6桁</div>
+            <input type="text" id="regPartner" class="w-reg" placeholder="例：123456" maxlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="off" enterkeyhint="done">
+            <div class="hint">半角数字6桁（未登録の方は手動で入力できます）</div>
             <div class="err-msg" id="regPartner-err">半角数字6桁で入力してください</div>
+            <div class="lookup-msg" id="regPartner-lookup"></div>
           </div>
           <div class="form-group">
             <label>パートナー名（ふりがな）<span class="req">必須</span></label>
@@ -242,13 +267,13 @@ input.invalid{border-color:var(--err);background:#fff6f6}
       <div class="card-title"><i class="fas fa-address-book"></i>連絡先</div>
       <div class="form-group">
         <label><i class="fas fa-user"></i>連絡先氏名<span class="req">必須</span></label>
-        <input type="text" id="contactName" class="w-addr" placeholder="例：田中 太郎">
+        <input type="text" id="contactName" class="w-addr" autocomplete="name" enterkeyhint="next" placeholder="例：田中 太郎">
         <div class="err-msg" id="contactName-err">連絡先氏名を入力してください</div>
       </div>
       <div class="form-group">
         <label><i class="fas fa-mailbox"></i>郵便番号<span class="req">必須</span></label>
         <div class="zip-wrap">
-          <input type="text" id="zip" placeholder="例：4640858" maxlength="8" inputmode="numeric">
+          <input type="text" id="zip" placeholder="例：4640858" maxlength="8" inputmode="numeric" autocomplete="postal-code" enterkeyhint="next">
           <button type="button" class="btn-zip" onclick="searchZip(false)"><i class="fas fa-search"></i> 検索</button>
         </div>
         <div class="hint">7桁入力で都道府県・市区町村・町域を自動入力します</div>
@@ -257,28 +282,28 @@ input.invalid{border-color:var(--err);background:#fff6f6}
       <div class="form-row">
         <div class="form-group">
           <label>都道府県<span class="req">必須</span></label>
-          <input type="text" id="pref" placeholder="例：愛知県">
+          <input type="text" id="pref" autocomplete="address-level1" placeholder="例：愛知県">
           <div class="err-msg" id="pref-err">都道府県を入力してください</div>
         </div>
         <div class="form-group">
           <label>市区町村・町域<span class="req">必須</span></label>
-          <input type="text" id="city" placeholder="例：名古屋市千種区千種">
+          <input type="text" id="city" autocomplete="address-level2" placeholder="例：名古屋市千種区千種">
           <div class="err-msg" id="city-err">市区町村を入力してください</div>
         </div>
       </div>
       <div class="form-group">
         <label>番地・マンション名<span class="req">必須</span></label>
-        <input type="text" id="street" class="w-addr" placeholder="例：1-30-2 古井ノ坂ビル201">
+        <input type="text" id="street" class="w-addr" autocomplete="address-line1" enterkeyhint="next" placeholder="例：1-30-2 古井ノ坂ビル201">
         <div class="err-msg" id="street-err">番地・建物名を入力してください</div>
       </div>
       <div class="form-group">
         <label><i class="fas fa-mobile-screen"></i>携帯番号<span class="req">必須</span></label>
-        <input type="tel" id="mobile" class="w-mobile" placeholder="例：09012345678" inputmode="numeric" maxlength="13">
+        <input type="tel" id="mobile" class="w-mobile" placeholder="例：09012345678" inputmode="tel" autocomplete="tel" enterkeyhint="next" maxlength="13">
         <div class="err-msg" id="mobile-err">携帯番号を半角数字で入力してください</div>
       </div>
       <div class="form-group">
         <label><i class="fas fa-envelope"></i>メールアドレス<span class="req">必須</span></label>
-        <input type="email" id="email" class="w-email" placeholder="例：example@mail.com" autocomplete="email">
+        <input type="email" id="email" class="w-email" placeholder="例：example@mail.com" autocomplete="email" inputmode="email" enterkeyhint="done">
         <div class="hint">申込内容の確認メールをお送りします</div>
         <div class="err-msg" id="email-err">正しいメールアドレスを入力してください</div>
       </div>
@@ -347,7 +372,7 @@ input.invalid{border-color:var(--err);background:#fff6f6}
         </div>
         <div class="form-group">
           <label><i class="fas fa-yen-sign"></i> 振込金額<span class="req">必須</span></label>
-          <input type="number" id="transferAmount" placeholder="例：5000" min="0" style="width:100%" inputmode="numeric">
+          <input type="number" id="transferAmount" placeholder="例：5000" min="0" style="width:100%" inputmode="numeric" enterkeyhint="done">
           <div class="hint">※ カンマ（,）なしで入力してください</div>
           <div class="err-msg" id="transferAmount-err">振込金額を入力してください</div>
         </div>
@@ -414,7 +439,7 @@ input.invalid{border-color:var(--err);background:#fff6f6}
 
 <script>
 /* ========= EmailJS ========= */
-emailjs.init("Y0hgw0hQjsbdC3pnP");
+window.addEventListener("load", () => emailjs.init("Y0hgw0hQjsbdC3pnP"));
 const EMAIL_SERVICE  = 'service_kqbq3rd';
 const EMAIL_TEMPLATE = 'template_mg812of';
 const ORGANIZER_MAIL = 'jdc.ama.entry@gmail.com';
@@ -578,6 +603,55 @@ $('zip').addEventListener('input', function(){
   this.value = d.length > 3 ? d.slice(0,3) + '-' + d.slice(3) : d;
   if (d.length === 7) searchZip(true);   // 7桁入力で自動検索
 });
+
+
+/* ========= 選手データ（Amaエントリー用データ_03.xlsx より埋込） =========
+   列: [リーダー番号, リーダーふりがな, リーダー氏名, パートナー番号, パートナーふりがな, パートナー氏名]
+   同じ登録番号が複数行ある場合は、後ろの行（＝最新データ）を採用する */
+const PLAYER_ROWS = [["308192","さくらい ひろゆき","櫻井 裕幸","308193","みどりかわ ともこ","緑川 知子"],["308944","のむら りょうき","野村 凌希","308945","さかもと ゆきこ","坂元悠木子"],["308946","ながや ともひさ","長屋 智久","308947","はすだ はるか","蓮田 陽香"],["400001","くさもと かずま","草本 和馬","400002","くさもと ようこ","草本 洋子"],["400009","みうら せいじ","三浦 誠二","400010","みうら よしこ","三浦 美子"],["400015","いしかわ かつみ","石川 克巳","400318","おかだ ひろこ","岡田 博子"],["400043","うの ゆきお","宇野 幸男","400044","ほんだ くにこ","本田久仁子"],["400075","ふじい ゆきお","藤井 幸夫","440921","あおき くにえ","青木 邦枝"],["400083","こざわ まこと","古澤 誠","400084","みどりや すみえ","緑谷朱三江"],["400089","おかだ ひろゆき","岡田 浩之","406758","おかだ やすえ","岡田やす江"],["400109","いわもと すすむ","岩本 進","440793","いがみ すーじー","伊神スージー"],["400127","むらかみ かずほ","村上 和穂","400128","かねこ まゆみ","金子 真弓"],["400171","ふくおか しんいち","福岡 新一","400172","ふくおか ゆうこ","福岡 裕子"],["400203","ちかだ としひろ","近田 敏弘","400204","ちかだ ひろこ","近田 弘子"],["400249","せき まもる","関 守","400250","おかたに えみこ","岡谷恵美子"],["400265","おがわ かつひこ","小川 克彦","400266","いわい さかえ","岩井 栄"],["400273","きむら のぼる","木村 登","400274","いとう めぐみ","伊藤めぐみ"],["400335","こづか しょうがく","古塚 正覚","400336","こづか しょうこ","古塚 彰子"],["400345","ほそざわ としひろ","細澤 俊博","405628","ほそだ あやの","細田あやの"],["400371","おき まさなり","沖 雅也","400372","ひろせ よしこ","広瀬 美子"],["400373","えんどう やすひろ","遠藤 保弘","400374","えんどう はるみ","遠藤はるみ"],["400605","たかはし ひろみつ","髙橋 弘光","440798","あさの りな","浅野 理奈"],["400616","まつした しげる","松下 茂","400617","まつした ちえこ","松下知英子"],["403642","いけだ まさとし","池田 正敏","440903","ひがしぐち そのこ","東口 園子"],["403646","くりぞえ あきら","栗添 明","403647","すずき ひでえ","鈴木 秀江"],["403887","やまもと あきら","山本 明","403888","やまもと はるみ","山本 晴美"],["403891","ごとう もとのぶ","後藤 元信","403892","ごとう よしこ","後藤 佳子"],["404405","てらにし おさむ","寺西 雄三","404406","てらにし ひとみ","寺西ひとみ"],["404695","くさま たかし","草間 隆志","404696","くさま たかこ","草間 孝子"],["404697","とだ みつし","戸田 光志","404698","とだ ひろこ","戸田ひろ子"],["404842","はやし かずのり","林 一典","404843","はやし きょうこ","林 恭子"],["404860","あべ まさみ","阿部 正三","404861","あべ さとみ","阿部 里美"],["404868","いわせ としのり","岩瀬 敏記","440910","うえだ ゆうこ","上田 裕子"],["404887","ありが よしたか","有賀 義隆","406115","くにえだ けいこ","国枝 敬子"],["404889","うめだ なおき","梅田 直樹","440950","まつばら せつこ","松原 節子"],["404919","よしだ しげる","吉田 茂","440811","さかい みさこ","酒井美早子"],["404939","はやかわ あきひこ","早川 明彦","404940","すぎうら せつこ","杉浦 節子"],["404977","いとう ゆうすけ","伊藤 勇祐","404978","かわきた なおみ","河北 直美"],["404987","ながえ まこと","長江 誠","404988","しかの ひさえ","鹿野 久恵"],["404989","ほそい よしひこ","細井 良彦","404990","ほそい かずこ","細井 和子"],["405041","いわつき ぜんいち","岩槻 善一","440424","こんどう みちこ","近藤美知子"],["405137","とだ いさお","戸田 功","405138","とだ みかこ","戸田美加子"],["405141","くさかわ けんじ","草川 賢次","405142","くさかわ さちこ","草川 幸子"],["405281","いけだ ひさし","池田 永","405282","いけだ きょうこ","池田 京子"],["405283","いしかわ たかひさ","石川 隆久","405284","すぎやま みさこ","杉山美佐子"],["405289","おおつか たけよし","大塚 竹芳","405290","おおつか やえこ","大塚矢重子"],["405296","のむら とみお","野村 富夫","440511","やまもと さいこ","山本 宰子"],["405302","もりた としかず","森田 敏和","440988","さとう ゆみ","佐藤 裕美"],["405381","いしはら しげゆき","石原 繁幸","405382","いしはら せつえ","石原 節江"],["405521","かとう まさひろ","加藤 正広","440975","いとう かおり","伊藤かをり"],["405574","こんどう よしあき","近藤 由秋","440432","みうら あやこ","三浦 彩子"],["405618","いちかわ たつひろ","市川 達廣","440205","ふせ まい","布施 舞"],["405783","しばた としお","柴田 年男","405784","よこた きぬよ","横田 絹代"],["405831","おかだ ひろし","岡田 洋","405832","おかだ みどり","岡田みどり"],["406116","いとう よしひと","伊藤 義人","406117","すずき くみこ","鈴木久美子"],["406130","あらき たかお","荒木 隆雄","406131","あらき けいこ","荒木けい子"],["406132","いしはら いつろう","石原 逸郎","406133","いしはら えみこ","石原恵美子"],["406136","いとう せいき","伊藤 成輝","406137","かつはら ゆきこ","葛原ゆき子"],["406140","いど ひろし","井戸 博","406141","いど よしこ","井戸 好子"],["406144","いまい よしはる","今井 吉晴","406145","きたがわ えり","北川 恵里"],["406146","うえの かずお","上野 和勇","406147","はまじま はつこ","浜島はつ子"],["406158","おざき なおや","尾﨑 直也","440967","はぎわら まさみ","萩原 雅美"],["406192","しまい りょうじ","島井 良治","404827","つちや きよみ","土屋 潔美"],["406200","たかぎ かつゆき","髙木 克之","406201","くさか きしこ","日下貴志子"],["406206","たしろ ひろし","田代 浩","406207","たしろ さとこ","田代 智子"],["406212","たんの よしみち","丹野 吉道","406213","たんの いづみ","丹野いづみ"],["406226","なみきり たかはる","波切 高治","406227","しらい やすこ","白井 靖子"],["406244","ひぐち よしはる","樋口 吉治","406245","ひぐち たまこ","樋口 玉子"],["406265","まつむら きよたか","松村 清孝","400342","すずき くみこ","鈴木久美子"],["406283","もり まさよし","森 正吉","440945","おだか たえこ","尾高 妙子"],["406408","おおばやし みきね","大林 幹根","406409","すがぬま ゆりこ","菅沼百合子"],["406540","かわむら あきい","河村 明偉","440942","いいだ のりこ","飯田 規子"],["406545","こんどう さだし","近藤 貞司","406546","こんどう ともこ","近藤 知子"],["406568","たかはし まさき","髙橋 正樹","440045","うめむら やすこ","梅村 保子"],["406589","なるみ まさと","鳴海 正人","406590","さかした やえこ","坂下八永子"],["406604","ひらまつ なりふみ","平松 成文","406605","はら えいこ","原 映子"],["406610","まえはら かつあき","前原 勝明","406611","まえはら まりこ","前原真理子"],["406620","みむら みきお","三村三喜男","406621","みむら まさえ","三村 政江"],["406740","いのうえ まさみき","井上 雅幹","406741","いのうえ けいこ","井上 啓子"],["406752","うらかわ たくじ","浦川 卓嗣","406753","うらかわ えつこ","浦川 悦子"],["406754","おおいし けいすけ","大石 敬介","440918","てらにし りお","寺西 里織"],["406774","なかいずみ えいき","中泉 栄基","406775","よこやま ときこ","横山 時子"],["406784","しばがき ひろゆき","柴垣 宏行","406785","ふくたき あいこ","福瀧 愛子"],["406786","すぎもと まこと","杉本 誠","405286","たなか ようこ","田中 洋子"],["406838","やまもと あきら","山本 明","406839","たぐち よしこ","田口 喜子"],["440009","おおい すすむ","大井 進","440010","おおい ふさよ","大井 房代"],["440012","あんどう たかひろ","安藤 貴洋","405558","あんどう えり","安藤 恵里"],["440129","とおやま のりゆき","遠山 則行","440130","とおやま みつこ","遠山 満子"],["440182","いわせ やすお","岩瀬 靖央","440183","こばやし みきこ","古林美紀子"],["440210","なかむら としや","中村 俊哉","440211","なかむら まりこ","中村真理子"],["440212","いわお あきのり","岩男 昭則","440841","しょうや きほう","庄屋 貴鳳"],["440228","たかや さとし","髙谷 智史","440867","きたがわ あきほ","北川 明歩"],["440230","やまもと かずま","山本 一真","440231","かのう あんな","加納 杏那"],["440287","すどう すすむ","須藤 進","440288","こばやし つばき","小林 椿"],["440292","かめい まさはる","亀井 政春","440293","うめだ ひとみ","梅田ひとみ"],["440309","ますはら ひさし","増原 尚","440310","ますはら りえこ","増原理惠子"],["440356","かゆかわ まさみつ","粥川 將光","440897","あおき せいな","青木 聖奈"],["440356","かゆかわ まさみつ","粥川 將光","440926","かとう ちさ","加藤 千沙"],["440360","さがら ゆうご","相良 悠伍","440590","ばん としこ","藩 寿子"],["440396","やまだ りょうぞう","山田 良三","440397","やまだ たえみ","山田 妙美"],["440398","きしもと かずゆき","岸本 和行","440399","きしもと てるみ","岸本 輝美"],["440402","さとう ゆたか","佐藤 寛","400008","こにし ゆりこ","小西ゆり子"],["440403","おおたけ てるひさ","大竹 輝久","440512","おくだ かずえ","奥田 一恵"],["440435","みなと ひろし","湊 博志","440602","うせ かおる","宇瀬 薫"],["440462","もりやま ようきち","森山 陽吉","440463","もりやま もとこ","森山 資子"],["440464","かわせ ひでよ","川瀬 英世","441029","はしもと くみ","橋本 クミ"],["440465","はせがわ たかとし","長谷川貴敏","440466","はせがわ ともみ","長谷川共美"],["440473","かしはら こうた","樫原 康太","440564","かとう みなみ","加藤みなみ"],["440507","おぐり あゆむ","小栗 歩","440508","おぐり さえこ","小栗沙永子"],["440535","ののやま ふみお","野々山史男","440536","ののやま ちせよ","野々山千世代"],["440559","あきた りゅうせい","秋田 龍星","440560","まつむら まいな","松村 舞凪"],["440608","すぎやま ひさかず","杉山 久八","440609","きたざわ ゆみこ","北澤由美子"],["440610","やました けいたろう","山下慶太郎","440611","いけだ あやか","池田 綾香"],["440617","やざわ ひでかず","矢澤 秀一","440618","ながの よしえ","長野 雅恵"],["440636","かかみ ひとし","各務 均","440637","かかみ とよこ","各務登代子"],["440662","かとう たいき","加藤 大喜","440167","こもり ななみ","小森菜々美"],["440681","かわなご たくみ","川那子拓己","440785","まえだ りか","前田 里香"],["440709","みわ ひろゆき","三輪 裕之","440710","いしかわ あゆみ","石川 愛弓"],["440714","くろかわ よしき","黒川 芳樹","440715","くろかわ ながこ","黒川 良子"],["440723","おくぞの まこと","奥薗 信人","440724","こいけ りさ","小池 理紗"],["440734","あさい えいいち","浅井 英一","440735","となり さよこ","戸成佐代子"],["440736","いわさき こうじ","岩崎 幸司","440737","むらた あいこ","村田 愛子"],["440749","ふくあき としひこ","福明 俊彦","440336","さかきばら ゆか","榊原 由夏"],["440763","さなえ てつや","早苗 哲也","404829","わたなべ いくこ","渡辺 郁子"],["440767","みずたに ゆたか","水谷 温","440768","おぎそ たえこ","小木曽多恵子"],["440780","こうけつ だいき","纐纈 大貴","440878","しのだ ひなた","篠田 雛多"],["440791","すずき ますみ","鈴木 真澄","440201","やまぐち としえ","山口 年枝"],["440804","たかはし りゅうた","髙橋 竜太","440727","たいら さやか","平良早耶花"],["440806","おおの けいた","大野 啓太","440897","あおき せいな","青木 聖奈"],["440808","ほんだ だいち","本多 大地","440919","そだ しおり","曽田 詩織"],["440816","いしかわ しんいち","石川 鎮一","440817","いしかわ あつこ","石川 敦子"],["440826","しおもり としお","塩森 敏雄","440827","こんどう としえ","近藤 俊江"],["440830","すずき はやと","鈴木 颯斗","440831","くりた なつき","栗田 菜月"],["440833","ほづみ しゅん","穂積 隼","440974","こばやし ゆうか","小林 優花"],["440835","しみず じゅん","志水 淳","440836","あだち たけこ","足立 武子"],["440849","よしざわ ゆうた","吉澤 雄太","440652","みうら しずか","三浦 静華"],["440860","かとう のりひこ","加藤 紀彦","440751","おおた れいこ","太田 玲子"],["440861","おかもと たかよし","岡本 隆義","400248","おかもと れいこ","岡本 令子"],["440864","やの たかひろ","矢野 誉大","440956","うめたに もえ","梅谷 萌"],["440870","みずの きしん","水野 喜心","440953","かとう もえ","加藤 萌"],["440872","ささき ひろと","佐々木寛斗","440679","かとう さり","加藤 紗理"],["440890","ちば たかとも","千葉 尚知","440891","おおやま なつき","大山 夏輝"],["440892","もりもと ゆうき","森本 裕貴","440893","はっとり まほ","服部 麻帆"],["440894","やまもと きよし","山本 清","440895","いしかわ ようこ","石川 洋子"],["440896","なかむら たくや","中村 卓哉","440914","たかはし なな","髙橋 奈々"],["440896","なかむら たくや","中村 卓哉","440977","ごとう きみこ","後藤喜美子"],["440898","やまぐち みずき","山口 瑞貴","440899","みつばやし つきこ","三林 月子"],["440906","たかい そうた","高井 壮太","440907","きたはら まいこ","北原 舞子"],["440906","たかい そうた","髙井 壮太","440907","きたはら まいこ","北原 舞子"],["440908","やまもと ゆうり","山本 有理","440909","もり あやの","森 彩乃"],["440911","ひらい やすお","平井 康夫","440888","よねづ ゆり","米津 由里"],["440915","きたむら けんたろう","北村健太郎","440925","きんばら りさ","金原 理紗"],["440916","あさい せいじ","浅井 清史","440917","あさい ひろこ","浅井 裕子"],["440920","ほなが りょうま","保永凌央馬","440984","おさだ みゆき","長田 深幸"],["440922","あんどう つとむ","安藤 勉","440923","しんかい のりえ","新海 典江"],["440927","わたなべ まさふみ","渡辺 正文","440928","ほさか えつこ","保坂 悦子"],["440929","おくだ だいち","奥田 大地","440771","かのう うらん","加納 羽華"],["440930","とくら かずゆき","徳良 和之","440931","あおやま みかこ","青山実夏子"],["440932","ひらの ふみ","平野 文美","440933","すぎた のりこ","杉田 則子"],["440932","ひらの ふみ","平野 文美","440988","さとう ゆみ","佐藤 裕美"],["440932","ひらの ふみ","平野 文美","441011","むらかみ くみこ","村上久美子"],["440940","さの ひろし","佐野 寛","440941","なす けいこ","那須 恵子"],["440943","さかもと まさあき","坂本 雅昭","440414","いぬかい としえ","犬飼とし江"],["440944","はやし ひろたか","林 泰孝","440297","わたなべ みほこ","渡邉美保子"],["440946","やまもと たつき","山本 立樹","440947","やまもと ゆき","山本 夕貴"],["440948","さとう そうま","佐藤 壮真","440949","たまこし さつき","玉腰さつき"],["440951","みずの りく","水野 陸","440952","にしやま みさと","西山 美聡"],["440954","にしかわ だいすけ","西川 大将","440955","うちだ ももか","内田 桃果"],["440957","ほそえ こうへい","細江 耕平","440958","しまづ このは","島津 之葉"],["440959","つちや としお","土屋 俊雄","440960","まつお むつみ","松尾むつみ"],["440961","むろと けいた","室戸 啓汰","440962","のだ まお","野田 麻緒"],["440963","いわもと ごう","岩本 豪","440964","さいとう みお","齊藤 澪"],["440965","しまだ きょうみ","島田 亨海","440966","きくち あつこ","菊池 淳子"],["440967","すどう かなめ","須藤 要","440500","にむら つかさ","二村つかさ"],["440968","ふくだ ゆうや","福田 雄也","440969","おがわ みれい","小川 美玲"],["440972","うしだ もとひこ","牛田 基彦","440973","うしだ きよみ","牛田紀世美"],["440976","すどう かなめ","須藤 要","440500","にむら つかさ","二村つかさ"],["440978","くにた しんや","國田 慎弥","440979","さくらい れな","櫻井 玲奈"],["440980","はっとり しげき","服部 茂樹","440981","おぜき ちえこ","尾関知恵子"],["440982","かのう ひろあき","加納 弘章","440983","いとう あや","井藤 あや"],["440985","まつばら しゅんすけ","松原 俊輔","440986","やの さゆり","矢野沙侑里"],["440987","きんばら りさ","金原 理紗","440897","あおき せいな","青木 聖奈"],["440989","おだ かつよし","小田 一善","440990","おだ なつき","小田ナツキ"],["440995","いしかわ かずお","石川 和男","440996","いしかわ こまき","石川 小巻"],["440997","あらき とよゆき","荒木 豊之","406520","うちたてわ ひとみ","内立輪ひとみ"],["440998","おおば ゆきや","櫻庭 幸哉","440415","かみや さくら","神谷さくら"],["440999","やまかわ たいち","山川 太一","441000","がま えりな","蒲 江里奈"],["441001","にしまつ ひろと","西松 大翔","441002","もりした なつき","森下 夏妃"],["441003","しんかわ あきと","親川 聖人","441004","かわぎし くるみ","河岸 来実"],["441005","わさだ ゆうき","和佐田結樹","441006","とおやま さえ","遠山 彩恵"],["441007","おがや かなむ","鋸屋 叶夢","441008","ほんだ みずき","本多 瑞季"],["441012","はらだ のりお","原田 則夫","441013","はらだ まゆみ","原田麻由美"],["441014","たかぎ かずみつ","髙木 一光","441015","たかぎ せつこ","髙木 節子"],["441016","ふくしま そうた","福島 颯太","441017","まつい よしみ","松井 良美"],["441018","もりもと たかひろ","森本 貴大","441019","しまじ ゆりえ","島地由利江"],["441020","やました ゆうだい","山下 雄大","440969","おがわ みれい","小川 美玲"],["441021","すずき けいた","鈴木 啓太","441022","たなか きよは","田中 清羽"],["441023","たかはし だいも","高橋 大最","441024","うちかわ まや","内川 摩耶"],["441025","おがわ はると","小川 遥叶","441026","わたなべ はるみ","渡邉 晴美"],["441027","つかだ よしなり","塚田 淑慈","441028","とくなが まい","徳永 真唯"],["441030","みぞわき こういち","溝脇 宏一","440288","こばやし つばき","小林 椿"],["441031","なかむら けいご","中村 渓吾","441032","おおの あゆみ","大野安由好"],["506114","かとう なおひさ","加藤 修久","508116","かとう ゆうこ","加藤 裕子"],["506146","くりばやし ゆきのり","栗林 幸範","508147","さくも かずこ","左雲 和子"],["506231","たなか こうき","田中 高輝","508237","たつぐち なさ","竜口 七彩"],["506253","でぐち がくと","出口 楽人","508033","おちみず まなみ","落水麻菜美"],["506273","なかの りょうすけ","中野 涼介","508279","なかの ちえみ","中野 智美"],["602710","いながき ともひろ","稲垣 知宏","602721","いながき なおみ","稲垣 尚美"]];
+const PLAYER_INDEX = {};   // 登録番号 -> {self:{no,kana,kanji}, other:{no,kana,kanji}}
+PLAYER_ROWS.forEach(r => {
+  const L = {no:r[0], kana:r[1], kanji:r[2]}, P = {no:r[3], kana:r[4], kanji:r[5]};
+  if (L.no) PLAYER_INDEX[L.no] = {self:L, other:P};
+  if (P.no) PLAYER_INDEX[P.no] = {self:P, other:L};   // 逆の並び（リーダー/パートナー入替）にも対応
+});
+const autoFilled = {};   // id -> 自動入力した値（手動編集されたら解除）
+function setAuto(id, val){
+  const el = $(id); el.value = val || ''; autoFilled[id] = el.value;
+  el.classList.toggle('autofilled', el.value !== '');
+  el.classList.remove('invalid'); const er = $(id + '-err'); if (er) er.classList.remove('show');
+}
+function clearAuto(ids){
+  ids.forEach(id => { if (autoFilled[id] !== undefined && $(id).value === autoFilled[id]) $(id).value = '';
+    delete autoFilled[id]; $(id).classList.remove('autofilled'); });
+}
+const LEADER_IDS  = ['regLeader','leaderKana','leaderKanji'];
+const PARTNER_IDS = ['regPartner','partnerKana','partnerKanji'];
+function lookupPlayer(fromSide){
+  const mine  = fromSide === 'L' ? LEADER_IDS : PARTNER_IDS;
+  const other = fromSide === 'L' ? PARTNER_IDS : LEADER_IDS;
+  const msg = $(fromSide === 'L' ? 'regLeader-lookup' : 'regPartner-lookup');
+  const no = $(mine[0]).value;
+  msg.className = 'lookup-msg'; msg.textContent = '';
+  if (no.length < 6){ clearAuto(mine.slice(1)); clearAuto(other); return; }
+  const hit = PLAYER_INDEX[no];
+  if (!hit){
+    clearAuto(mine.slice(1)); clearAuto(other);
+    msg.className = 'lookup-msg ng';
+    msg.textContent = '登録データに該当がありません。お手数ですが手動で入力してください。';
+    return;
+  }
+  setAuto(mine[1], hit.self.kana);  setAuto(mine[2], hit.self.kanji);
+  setAuto(other[0], hit.other.no); setAuto(other[1], hit.other.kana); setAuto(other[2], hit.other.kanji);
+  if (document.activeElement && document.activeElement.id === mine[0]) document.activeElement.blur();   // スマホのキーボードを閉じる
+  msg.className = 'lookup-msg ok';
+  msg.textContent = '✔ 登録データから リーダー・パートナーの情報を自動入力しました（修正も可能です）';
+}
+$('regLeader').addEventListener('input',  () => lookupPlayer('L'));
+$('regPartner').addEventListener('input', () => lookupPlayer('P'));
+[...LEADER_IDS, ...PARTNER_IDS].forEach(id => $(id).addEventListener('input', function(){
+  if (autoFilled[id] !== undefined && this.value !== autoFilled[id]){ delete autoFilled[id]; this.classList.remove('autofilled'); }
+}));
 
 /* ========= 郵便番号→住所（zipcloud JSONP） ========= */
 function searchZip(auto){
